@@ -84,7 +84,7 @@ jobs:
 
       # Step 10: Upload artifact
       - name: 📤 Upload .exe as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success()
         with:
           name: 가송장_생성기-windows-exe
@@ -187,7 +187,7 @@ jobs:
           pyinstaller gasongjiang.spec
 
       - name: 📤 Upload .app as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success()
         with:
           name: 가송장_생성기-macos-app
