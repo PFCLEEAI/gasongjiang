@@ -1,0 +1,67 @@
+:root {
+  --background: oklch(0.9880 0.0035 253.6667);
+  --foreground: oklch(0.1450 0.0049 253.6667);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.1450 0.0049 253.6667);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.1450 0.0049 253.6667);
+  --primary: oklch(0.5530 0.1650 142.4953);
+  --primary-foreground: oklch(0.9850 0 0);
+  --secondary: oklch(0.7730 0.0940 142.4953);
+  --secondary-foreground: oklch(0.1450 0.0049 253.6667);
+  --muted: oklch(0.9400 0.0100 253.6667);
+  --muted-foreground: oklch(0.5560 0 0);
+  --accent: oklch(0.6390 0.1640 25.3239);
+  --accent-foreground: oklch(0.9850 0 0);
+  --destructive: oklch(0.5770 0.2450 27.3250);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9300 0.0050 253.6667);
+  --input: oklch(0.9800 0.0050 253.6667);
+  --ring: oklch(0.5530 0.1650 142.4953);
+  --chart-1: oklch(0.5530 0.1650 142.4953);
+  --chart-2: oklch(0.6390 0.1640 25.3239);
+  --chart-3: oklch(0.7200 0.1200 265.0000);
+  --chart-4: oklch(0.7730 0.0940 142.4953);
+  --chart-5: oklch(0.5770 0.2450 27.3250);
+  --sidebar: oklch(0.9850 0 0);
+  --sidebar-foreground: oklch(0.1450 0.0049 253.6667);
+  --sidebar-primary: oklch(0.5530 0.1650 142.4953);
+  --sidebar-primary-foreground: oklch(0.9850 0 0);
+  --sidebar-accent: oklch(0.6390 0.1640 25.3239);
+  --sidebar-accent-foreground: oklch(0.9850 0 0);
+  --sidebar-border: oklch(0.9300 0.0050 253.6667);
+  --sidebar-ring: oklch(0.5530 0.1650 142.4953);
+  --font-sans: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+  --radius: 0.5rem;
+  --shadow-2xs: 0 1px 2px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 2px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0 1px 2px 0px hsl(0 0% 0% / 0.08), 0 1px 2px -1px hsl(0 0% 0% / 0.08);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.10), 0 2px 4px -2px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.10), 0 4px 6px -4px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.10), 0 8px 10px -6px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.15);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 8px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font-sans) !important;
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

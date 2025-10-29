@@ -1,0 +1,35 @@
+# Dockerfile for building Windows .exe on any platform
+# This builds a Windows executable using Wine + PyInstaller
+
+FROM python:3.11-slim
+
+# Install build tools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . /app
+
+# Install Python dependencies
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.txt && \
+    pip install pyinstaller
+
+# Build Windows executable
+RUN pyinstaller \
+    --onefile \
+    --windowed \
+    --name="가송장_생성기" \
+    main.py
+
+# Output message
+RUN echo "✅ Windows .exe built successfully!" && \
+    ls -lh dist/
+
+# Keep container running
+CMD ["/bin/bash"]

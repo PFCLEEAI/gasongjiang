@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가송장 생성기 - Modern Pastel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFF5E6 0%, #F3E8FF 100%) !important;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container-main {
+            background: #FFFBF7;
+            border: 2px solid #F0D4D8;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(230, 180, 190, 0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .title {
+            font-size: 28px !important;
+            font-weight: 700 !important;
+            color: #D97706 !important;
+            margin: 0 0 8px 0 !important;
+            line-height: 1.2;
+            letter-spacing: -0.3px;
+        }
+
+        .status {
+            font-size: 14px !important;
+            color: #92400E !important;
+            margin: 0 !important;
+            font-weight: 400;
+            transition: all 0.3s ease;
+        }
+
+        .status.success {
+            color: #10B981 !important;
+            font-weight: 600;
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(to right, #FFD4C4, #E9D5FF, #D4E4F7);
+            margin: 24px 0;
+            border-radius: 1px;
+        }
+
+        .content-section {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .file-status-box {
+            background: linear-gradient(135deg, #FFF0E6 0%, #FFF3F0 100%);
+            border: 2px solid #FFE4D6;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-status-box:hover {
+            border-color: #FFD0B8;
+            box-shadow: 0 4px 12px rgba(255, 197, 168, 0.2);
+        }
+
+        .file-status-label {
+            font-size: 12px !important;
+            color: #D97706 !important;
+            text-transform: uppercase;
+            font-weight: 700 !important;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .file-status-text {
+            font-size: 14px !important;
+            color: #92400E !important;
+            font-weight: 600;
+        }
+
+        .progress-box {
+            background: linear-gradient(135deg, #F0F4FF 0%, #F5F3FF 100%);
+            border: 2px solid #D4E4F7;
+            border-radius: 12px;
+            padding: 16px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #E9D5FF;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #EC4899 0%, #A855F7 100%);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.6s ease-out;
+        }
+
+        .progress-text {
+            font-size: 12px !important;
+            color: #6B21A8 !important;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-text .count {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-box.hidden {
+            display: none;
+        }
+
+        .button-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 20px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0);
+            transition: background 0.3s ease;
+            pointer-events: none;
+            border-radius: 10px;
+        }
+
+        .btn:hover::before {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FCA5A5 0%, #F87171 100%);
+            color: #FFFFFF !important;
+            box-shadow: 0 8px 16px rgba(252, 165, 165, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 12px 24px rgba(252, 165, 165, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #FCD5D5 0%, #FCB4B4 100%);
+        }
+
+        .btn-primary.loading::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-left: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #FFFFFF;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #DBEAFE 0%, #E0E7FF 100%);
+            color: #1E3A8A !important;
+            border: 2px solid #BFDBFE;
+            font-weight: 600;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #BFDBFE 0%, #C7D2FE 100%);
+            border-color: #93C5FD;
+            box-shadow: 0 4px 12px rgba(191, 219, 254, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary:active:not(:disabled) {
+            background: linear-gradient(135deg, #93C5FD 0%, #A5B4FC 100%);
+            transform: translateY(0);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .icon {
+            font-size: 16px;
+            margin-right: 6px;
+            display: inline-block;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 16px;
+            animation: slideDown 0.3s ease-out;
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #D1FAE5 0%, #C1FEE6 100%);
+            border: 2px solid #6EE7B7;
+            color: #065F46;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #FEE2E2 0%, #FEDFE2 100%);
+            border: 2px solid #FCA5A5;
+            color: #7F1D1D;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FEDAA3 100%);
+            border: 2px solid #FCD34D;
+            color: #78350F;
+        }
+
+        .alert-text {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container-main {
+                padding: 24px;
+            }
+
+            .title {
+                font-size: 24px !important;
+            }
+
+            .content-section {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .button-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .btn {
+                height: 40px;
+                font-size: 13px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-main">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">가송장 생성기</h1>
+            <p class="status" id="status">📂 파일을 선택하세요</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Content Section -->
+        <div class="content-section">
+            <!-- File Status -->
+            <div class="file-status-box">
+                <div class="file-status-label">파일 상태</div>
+                <div class="file-status-text" id="fileStatus">대기 중</div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-box hidden" id="progressBox">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressLabel">0 / 0 개 생성 중...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Buttons -->
+        <div class="button-section">
+            <button class="btn btn-primary" id="btnSelectFile">
+                <span class="icon">📂</span> 파일 선택
+            </button>
+            <button class="btn btn-secondary" id="btnGenerate" disabled>
+                <span class="icon">🔄</span> 송장 생성
+            </button>
+            <button class="btn btn-secondary" id="btnDownload" disabled>
+                <span class="icon">💾</span> Excel 다운로드
+            </button>
+        </div>
+
+        <!-- Alert -->
+        <div class="alert" id="alert">
+            <p class="alert-text" id="alertText"></p>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let appState = {
+            fileLoaded: false,
+            generating: false,
+            generated: false,
+            fileCount: 0
+        };
+
+        const elements = {
+            btnSelectFile: document.getElementById('btnSelectFile'),
+            btnGenerate: document.getElementById('btnGenerate'),
+            btnDownload: document.getElementById('btnDownload'),
+            status: document.getElementById('status'),
+            fileStatus: document.getElementById('fileStatus'),
+            progressBox: document.getElementById('progressBox'),
+            progressFill: document.getElementById('progressFill'),
+            progressLabel: document.getElementById('progressLabel'),
+            progressPercent: document.getElementById('progressPercent'),
+            alert: document.getElementById('alert'),
+            alertText: document.getElementById('alertText')
+        };
+
+        // File Select
+        elements.btnSelectFile.addEventListener('click', () => {
+            // Simulate file selection
+            appState.fileCount = Math.floor(Math.random() * 150) + 50;
+            appState.fileLoaded = true;
+
+            // Update UI
+            elements.status.textContent = `✅ 파일 로드됨: ${appState.fileCount} 개 주문`;
+            elements.status.classList.add('success');
+            elements.fileStatus.textContent = '로드됨';
+
+            // Enable generate button
+            elements.btnGenerate.disabled = false;
+
+            // Show alert
+            showAlert(`✅ 파일이 로드되었습니다! (${appState.fileCount}개의 주문)`, 'success');
+        });
+
+        // Generate
+        elements.btnGenerate.addEventListener('click', () => {
+            if (appState.fileLoaded && !appState.generating) {
+                startGeneration();
+            }
+        });
+
+        // Download
+        elements.btnDownload.addEventListener('click', () => {
+            if (appState.generated) {
+                showAlert('✅ 파일이 다운로드되었습니다!', 'success');
+                // Reset state
+                setTimeout(() => {
+                    resetApp();
+                }, 2000);
+            }
+        });
+
+        function startGeneration() {
+            appState.generating = true;
+            elements.btnGenerate.disabled = true;
+            elements.btnDownload.disabled = true;
+            elements.btnSelectFile.disabled = true;
+
+            // Show progress
+            elements.progressBox.classList.remove('hidden');
+
+            let current = 0;
+            const total = appState.fileCount;
+            const duration = 3000; // 3 seconds
+            const steps = 30;
+            const increment = total / steps;
+            const stepDuration = duration / steps;
+
+            const progressInterval = setInterval(() => {
+                current += increment;
+                if (current >= total) {
+                    current = total;
+                    clearInterval(progressInterval);
+                    completeGeneration();
+                } else {
+                    updateProgress(current, total);
+                }
+            }, stepDuration);
+        }
+
+        function updateProgress(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            const count = Math.round(current);
+
+            elements.progressFill.style.width = percentage + '%';
+            elements.progressLabel.textContent = `${count} / ${total} 개 생성 중...`;
+            elements.progressPercent.textContent = percentage + '%';
+        }
+
+        function completeGeneration() {
+            appState.generating = false;
+            appState.generated = true;
+
+            // Final update
+            updateProgress(appState.fileCount, appState.fileCount);
+
+            // Hide progress after 1 second
+            setTimeout(() => {
+                elements.progressBox.classList.add('hidden');
+                elements.status.textContent = `✅ ${appState.fileCount} 개 송장번호 생성 완료`;
+
+                // Enable download
+                elements.btnDownload.disabled = false;
+
+                showAlert(`🎉 송장 생성이 완료되었습니다! (${appState.fileCount}개)`, 'success');
+            }, 800);
+        }
+
+        function showAlert(message, type = 'success') {
+            elements.alertText.textContent = message;
+            elements.alert.className = `alert alert-${type} show`;
+
+            // Auto-dismiss after 4 seconds
+            setTimeout(() => {
+                elements.alert.classList.remove('show');
+            }, 4000);
+        }
+
+        function resetApp() {
+            appState = {
+                fileLoaded: false,
+                generating: false,
+                generated: false,
+                fileCount: 0
+            };
+
+            elements.status.textContent = '📂 파일을 선택하세요';
+            elements.status.classList.remove('success');
+            elements.fileStatus.textContent = '대기 중';
+            elements.btnSelectFile.disabled = false;
+            elements.btnGenerate.disabled = true;
+            elements.btnDownload.disabled = true;
+            elements.progressBox.classList.add('hidden');
+            elements.progressFill.style.width = '0%';
+        }
+    </script>
+</body>
+</html>

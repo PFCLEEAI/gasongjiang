@@ -1,0 +1,28 @@
+# UI Framework
+PyQt5==5.15.10
+
+# Excel Processing
+pandas==2.1.4
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# Data Validation
+pydantic==2.5.3
+
+# Date/Time Utilities
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-qt==4.2.0
+
+# Type Checking (development)
+mypy==1.7.1
+
+# Code Quality (development)
+black==23.12.1
+flake8==6.1.0
+
+# Build Tool
+pyinstaller==6.3.0
