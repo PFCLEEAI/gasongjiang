@@ -29,10 +29,43 @@ class ExcelUploadError(Exception):
     pass
 
 
+class FileFormat:
+    """Enum-like class for different Excel file formats"""
+    STANDARD_FORMAT = "standard"  # Multiple columns with data
+    TRACKING_ONLY_FORMAT = "tracking_only"  # Two columns: code + output
+
+
 class ExcelUploadHandler:
     """
     Handles Excel file validation and upload operations
+    Supports multiple Excel formats:
+    - Standard format: Multiple columns with order data
+    - Tracking only format: Just code column and output column
     """
+
+    @staticmethod
+    def detect_format(df: pd.DataFrame) -> str:
+        """
+        Auto-detect Excel file format based on structure and columns
+
+        Args:
+            df: DataFrame to analyze
+
+        Returns:
+            str: Format type (STANDARD_FORMAT or TRACKING_ONLY_FORMAT)
+        """
+        columns = [str(col).strip().lower() for col in df.columns]
+
+        # Tracking only format: Has "주문고유코드" (special code column)
+        # and only 2 columns
+        has_special_code = any('주문고유코드' in col or '고유코드' in col for col in columns)
+
+        if has_special_code and len(df.columns) == 2:
+            logger.info("Detected TRACKING_ONLY format (Special Code + Output)")
+            return FileFormat.TRACKING_ONLY_FORMAT
+        else:
+            logger.info("Detected STANDARD format (Multiple columns)")
+            return FileFormat.STANDARD_FORMAT
 
     @staticmethod
     def validate_file(file_path: str) -> None:
@@ -54,15 +87,18 @@ class ExcelUploadHandler:
         logger.info(f"File validation passed: {file_path}")
 
     @staticmethod
-    def read_excel(file_path: str) -> pd.DataFrame:
+    def read_excel(file_path: str, return_format: bool = False) -> tuple:
         """
         Read Excel file and return DataFrame
 
         Args:
             file_path: Path to Excel file
+            return_format: If True, return (df, format_type) tuple
 
         Returns:
             pd.DataFrame: Parsed Excel data
+            OR
+            tuple: (pd.DataFrame, format_type) if return_format=True
 
         Raises:
             ExcelUploadError: If file cannot be read
@@ -94,6 +130,11 @@ class ExcelUploadHandler:
             is_valid, error_message = validate_dataframe_not_empty(df)
             if not is_valid:
                 raise ExcelUploadError(error_message)
+
+            # Detect format if requested
+            if return_format:
+                detected_format = ExcelUploadHandler.detect_format(df)
+                return df, detected_format
 
             return df
 

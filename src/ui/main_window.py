@@ -24,6 +24,7 @@ from src.core.tracking_generator import TrackingNumberGenerator
 from src.core.uniqueness_checker import get_uniqueness_checker
 from src.handlers.excel_uploader import ExcelUploadHandler, ExcelUploadError
 from src.handlers.excel_exporter import ExcelExportHandler, ExcelExportError
+from src.handlers.excel_uploader import FileFormat
 from src.utils.constants import (
     APP_NAME,
     WINDOW_WIDTH,
@@ -85,6 +86,7 @@ class MainWindow(QMainWindow):
         self.current_df: Optional[pd.DataFrame] = None
         self.generated_numbers: Optional[list] = None
         self.generation_worker: Optional[GenerationWorker] = None
+        self.file_format: str = FileFormat.STANDARD_FORMAT  # Track input format
 
         self.init_ui()
         self.load_stylesheet()
@@ -189,8 +191,8 @@ class MainWindow(QMainWindow):
 
             logger.info(f"Selected file: {file_path}")
 
-            # Read Excel file
-            self.current_df = ExcelUploadHandler.read_excel(file_path)
+            # Read Excel file and detect format
+            self.current_df, self.file_format = ExcelUploadHandler.read_excel(file_path, return_format=True)
 
             # Update UI
             row_count = len(self.current_df)
@@ -316,11 +318,12 @@ class MainWindow(QMainWindow):
 
             logger.info(f"Saving to: {file_path}")
 
-            # Export
+            # Export (with format detection)
             ExcelExportHandler.create_output(
                 self.current_df,
                 self.generated_numbers,
-                file_path
+                file_path,
+                file_format=self.file_format
             )
 
             # Success message

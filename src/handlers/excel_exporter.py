@@ -20,6 +20,9 @@ from src.utils.constants import (
 from src.utils.validators import validate_output_path, sanitize_filename
 from src.utils.logger import get_logger
 
+# Import FileFormat from excel_uploader
+from src.handlers.excel_uploader import FileFormat
+
 logger = get_logger(__name__)
 
 
@@ -38,16 +41,22 @@ class ExcelExportHandler:
         df: pd.DataFrame,
         tracking_numbers: List[str],
         output_path: str,
-        apply_formatting: bool = True
+        apply_formatting: bool = True,
+        file_format: str = FileFormat.STANDARD_FORMAT
     ) -> bool:
         """
         Create output Excel file with tracking numbers assigned
+
+        Supports two formats:
+        - STANDARD_FORMAT: Add tracking number + delivery company columns
+        - TRACKING_ONLY_FORMAT: Replace output column with tracking numbers
 
         Args:
             df: Original DataFrame from input file
             tracking_numbers: List of generated tracking numbers
             output_path: Path to save output file
             apply_formatting: Apply Excel formatting (default: True)
+            file_format: Input format type (STANDARD or TRACKING_ONLY)
 
         Returns:
             bool: True if successful
@@ -77,16 +86,35 @@ class ExcelExportHandler:
             # Create a copy to avoid modifying original
             output_df = df.copy()
 
-            # Add tracking numbers column
-            output_df[COLUMN_TRACKING_NUMBER] = tracking_numbers
+            # Handle different formats
+            if file_format == FileFormat.TRACKING_ONLY_FORMAT:
+                # For tracking-only format: Replace the empty column with tracking numbers
+                # Assumes format is: [Column1, Column2] where Column2 is for output
+                logger.info("Exporting TRACKING_ONLY format")
+                original_columns = list(df.columns)
 
-            # Add delivery company column
-            output_df[COLUMN_DELIVERY_COMPANY] = DELIVERY_COMPANY
+                if len(original_columns) >= 2:
+                    # Use the second column as output
+                    output_df[original_columns[1]] = tracking_numbers
+                    final_columns = original_columns
+                else:
+                    # Fallback if structure unexpected
+                    output_df[COLUMN_TRACKING_NUMBER] = tracking_numbers
+                    final_columns = original_columns + [COLUMN_TRACKING_NUMBER]
+            else:
+                # For standard format: Add both tracking number and delivery company columns
+                logger.info("Exporting STANDARD format")
+                # Add tracking numbers column
+                output_df[COLUMN_TRACKING_NUMBER] = tracking_numbers
 
-            # Reorder columns: original columns + new columns at the end
-            original_columns = list(df.columns)
-            new_columns = [COLUMN_TRACKING_NUMBER, COLUMN_DELIVERY_COMPANY]
-            final_columns = original_columns + new_columns
+                # Add delivery company column
+                output_df[COLUMN_DELIVERY_COMPANY] = DELIVERY_COMPANY
+
+                # Reorder columns: original columns + new columns at the end
+                original_columns = list(df.columns)
+                new_columns = [COLUMN_TRACKING_NUMBER, COLUMN_DELIVERY_COMPANY]
+                final_columns = original_columns + new_columns
+
             output_df = output_df[final_columns]
 
             logger.info(f"Exporting DataFrame: {len(output_df)} rows, {len(output_df.columns)} columns")
