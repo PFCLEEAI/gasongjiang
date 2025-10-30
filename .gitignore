@@ -48,6 +48,8 @@ number_history.json
 *.log
 
 # Build artifacts
+# Note: gasongjiang.spec is tracked for CI builds
+!gasongjiang.spec
 *.spec
 *.dmg
 *.pkg
