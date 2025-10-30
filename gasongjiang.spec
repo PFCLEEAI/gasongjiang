@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='gasongjiang',
+    name='가송장_생성기',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
