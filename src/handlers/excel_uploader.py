@@ -52,20 +52,52 @@ class ExcelUploadHandler:
             df: DataFrame to analyze
 
         Returns:
-            str: Format type (STANDARD_FORMAT or TRACKING_ONLY_FORMAT)
+            str: Format type (TRACKING_ONLY_FORMAT)
+
+        Raises:
+            ExcelUploadError: If required column is not found
         """
-        columns = [str(col).strip().lower() for col in df.columns]
+        columns = [str(col).strip() for col in df.columns]
+        columns_lower = [col.lower() for col in columns]
 
-        # Tracking only format: Has "주문고유코드" (special code column)
-        # and only 2 columns
-        has_special_code = any('주문고유코드' in col or '고유코드' in col for col in columns)
+        # Check for "주문고유코드" column (required)
+        has_special_code = any('주문고유코드' in col for col in columns_lower)
 
-        if has_special_code and len(df.columns) == 2:
-            logger.info("Detected TRACKING_ONLY format (Special Code + Output)")
-            return FileFormat.TRACKING_ONLY_FORMAT
-        else:
-            logger.info("Detected STANDARD format (Multiple columns)")
-            return FileFormat.STANDARD_FORMAT
+        if not has_special_code:
+            logger.error(f"Required column '주문고유코드' not found. Columns: {columns}")
+            raise ExcelUploadError("파일에 '주문고유코드' 컬럼이 없습니다. 올바른 형식의 파일을 선택해주세요.")
+
+        logger.info(f"Detected TRACKING_ONLY format with columns: {columns}")
+        return FileFormat.TRACKING_ONLY_FORMAT
+
+    @staticmethod
+    def extract_special_codes(df: pd.DataFrame) -> list:
+        """
+        Extract special codes from the DataFrame
+
+        Args:
+            df: DataFrame containing '주문고유코드' column
+
+        Returns:
+            list: List of special codes
+        """
+        columns = [str(col).strip() for col in df.columns]
+
+        # Find the exact column name with "주문고유코드"
+        special_code_col = None
+        for col in columns:
+            if '주문고유코드' in col:
+                special_code_col = col
+                break
+
+        if special_code_col is None:
+            logger.error(f"Could not find special code column in: {columns}")
+            raise ExcelUploadError("'주문고유코드' 컬럼을 찾을 수 없습니다.")
+
+        # Extract and convert to list
+        codes = df[special_code_col].astype(str).tolist()
+        logger.info(f"Extracted {len(codes)} special codes from column '{special_code_col}'")
+        return codes
 
     @staticmethod
     def validate_file(file_path: str) -> None:

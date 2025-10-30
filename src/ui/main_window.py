@@ -24,7 +24,6 @@ from src.core.tracking_generator import TrackingNumberGenerator
 from src.core.uniqueness_checker import get_uniqueness_checker
 from src.handlers.excel_uploader import ExcelUploadHandler, ExcelUploadError
 from src.handlers.excel_exporter import ExcelExportHandler, ExcelExportError
-from src.handlers.excel_uploader import FileFormat
 from src.utils.constants import (
     APP_NAME,
     WINDOW_WIDTH,
@@ -84,9 +83,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.current_df: Optional[pd.DataFrame] = None
+        self.special_codes: Optional[list] = None
         self.generated_numbers: Optional[list] = None
         self.generation_worker: Optional[GenerationWorker] = None
-        self.file_format: str = FileFormat.STANDARD_FORMAT  # Track input format
 
         self.init_ui()
         self.load_stylesheet()
@@ -191,8 +190,19 @@ class MainWindow(QMainWindow):
 
             logger.info(f"Selected file: {file_path}")
 
-            # Read Excel file and detect format
-            self.current_df, self.file_format = ExcelUploadHandler.read_excel(file_path, return_format=True)
+            # Read Excel file
+            self.current_df = ExcelUploadHandler.read_excel(file_path)
+
+            # Detect format and validate required column
+            try:
+                ExcelUploadHandler.detect_format(self.current_df)
+            except ExcelUploadError as e:
+                self.show_error("파일 형식 오류", str(e))
+                logger.error(f"Format detection error: {e}")
+                return
+
+            # Extract special codes from the input
+            self.special_codes = ExcelUploadHandler.extract_special_codes(self.current_df)
 
             # Update UI
             row_count = len(self.current_df)
@@ -207,7 +217,7 @@ class MainWindow(QMainWindow):
             self.download_btn.setEnabled(False)
             self.generated_numbers = None
 
-            logger.info(f"File loaded: {row_count} rows")
+            logger.info(f"File loaded: {row_count} rows with special codes")
 
         except ExcelUploadError as e:
             self.show_error("파일 로드 실패", str(e))
@@ -292,7 +302,7 @@ class MainWindow(QMainWindow):
 
     def handle_download(self) -> None:
         """Handle download button click"""
-        if self.current_df is None or self.generated_numbers is None:
+        if self.special_codes is None or self.generated_numbers is None:
             self.show_warning("경고", "먼저 송장을 생성하세요.")
             return
 
@@ -318,12 +328,11 @@ class MainWindow(QMainWindow):
 
             logger.info(f"Saving to: {file_path}")
 
-            # Export (with format detection)
+            # Export with 3-column format (special codes, delivery company, tracking numbers)
             ExcelExportHandler.create_output(
-                self.current_df,
+                self.special_codes,
                 self.generated_numbers,
-                file_path,
-                file_format=self.file_format
+                file_path
             )
 
             # Success message
@@ -344,6 +353,7 @@ class MainWindow(QMainWindow):
     def reset_for_new_operation(self) -> None:
         """Reset application for next operation"""
         self.current_df = None
+        self.special_codes = None
         self.generated_numbers = None
         self.status_label.setText(MSG_INITIAL)
         self.status_label.setObjectName("statusLabel")

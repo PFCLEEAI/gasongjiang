@@ -38,25 +38,22 @@ class ExcelExportHandler:
 
     @staticmethod
     def create_output(
-        df: pd.DataFrame,
+        special_codes: List[str],
         tracking_numbers: List[str],
         output_path: str,
-        apply_formatting: bool = True,
-        file_format: str = FileFormat.STANDARD_FORMAT
+        apply_formatting: bool = True
     ) -> bool:
         """
-        Create output Excel file with tracking numbers assigned
-
-        Supports two formats:
-        - STANDARD_FORMAT: Add tracking number + delivery company columns
-        - TRACKING_ONLY_FORMAT: Replace output column with tracking numbers
+        Create output Excel file with exactly 3 columns:
+        1. 주문고유코드 (special code from input)
+        2. 택배사 (fixed: 경동택배)
+        3. 가송장 번호 (randomized tracking number)
 
         Args:
-            df: Original DataFrame from input file
+            special_codes: List of special codes from input file
             tracking_numbers: List of generated tracking numbers
             output_path: Path to save output file
             apply_formatting: Apply Excel formatting (default: True)
-            file_format: Input format type (STANDARD or TRACKING_ONLY)
 
         Returns:
             bool: True if successful
@@ -66,9 +63,9 @@ class ExcelExportHandler:
 
         Example:
             >>> handler = ExcelExportHandler()
-            >>> df = pd.DataFrame({"주문번호": ["A001", "A002"]})
+            >>> codes = ["DA616E9F6", "D74B2E218"]
             >>> numbers = ["20251111111111", "20252222222222"]
-            >>> handler.create_output(df, numbers, "output.xlsx")
+            >>> handler.create_output(codes, numbers, "output.xlsx")
             True
         """
         try:
@@ -78,46 +75,20 @@ class ExcelExportHandler:
                 raise ExcelExportError(error_message)
 
             # Validate input
-            if len(df) != len(tracking_numbers):
+            if len(special_codes) != len(tracking_numbers):
                 raise ExcelExportError(
-                    f"Mismatch: DataFrame has {len(df)} rows but {len(tracking_numbers)} tracking numbers provided"
+                    f"Mismatch: {len(special_codes)} special codes but {len(tracking_numbers)} tracking numbers provided"
                 )
 
-            # Create a copy to avoid modifying original
-            output_df = df.copy()
+            # Create output DataFrame with exactly 3 columns
+            output_df = pd.DataFrame({
+                '주문고유코드': special_codes,
+                '택배사': [DELIVERY_COMPANY] * len(special_codes),
+                '가송장 번호': tracking_numbers
+            })
 
-            # Handle different formats
-            if file_format == FileFormat.TRACKING_ONLY_FORMAT:
-                # For tracking-only format: Replace the empty column with tracking numbers
-                # Assumes format is: [Column1, Column2] where Column2 is for output
-                logger.info("Exporting TRACKING_ONLY format")
-                original_columns = list(df.columns)
-
-                if len(original_columns) >= 2:
-                    # Use the second column as output
-                    output_df[original_columns[1]] = tracking_numbers
-                    final_columns = original_columns
-                else:
-                    # Fallback if structure unexpected
-                    output_df[COLUMN_TRACKING_NUMBER] = tracking_numbers
-                    final_columns = original_columns + [COLUMN_TRACKING_NUMBER]
-            else:
-                # For standard format: Add both tracking number and delivery company columns
-                logger.info("Exporting STANDARD format")
-                # Add tracking numbers column
-                output_df[COLUMN_TRACKING_NUMBER] = tracking_numbers
-
-                # Add delivery company column
-                output_df[COLUMN_DELIVERY_COMPANY] = DELIVERY_COMPANY
-
-                # Reorder columns: original columns + new columns at the end
-                original_columns = list(df.columns)
-                new_columns = [COLUMN_TRACKING_NUMBER, COLUMN_DELIVERY_COMPANY]
-                final_columns = original_columns + new_columns
-
-            output_df = output_df[final_columns]
-
-            logger.info(f"Exporting DataFrame: {len(output_df)} rows, {len(output_df.columns)} columns")
+            logger.info(f"Exporting 3-column format: {len(output_df)} rows")
+            logger.info(f"Columns: {list(output_df.columns)}")
 
             # Write to Excel
             with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
@@ -177,8 +148,8 @@ class ExcelExportHandler:
                 adjusted_width = min(max_length + 2, 50)  # Cap at 50
                 worksheet.column_dimensions[column_letter].width = adjusted_width
 
-            # Format tracking number column (monospace font)
-            tracking_col_idx = df.columns.get_loc(COLUMN_TRACKING_NUMBER) + 1  # +1 for Excel (1-indexed)
+            # Format tracking number column (monospace font, centered)
+            tracking_col_idx = df.columns.get_loc('가송장 번호') + 1  # +1 for Excel (1-indexed)
             tracking_col_letter = chr(64 + tracking_col_idx)  # Convert to letter
 
             tracking_font = Font(name="Courier New", size=11)
@@ -189,13 +160,12 @@ class ExcelExportHandler:
                 cell.font = tracking_font
                 cell.alignment = tracking_alignment
 
-            # Format delivery company column (center alignment)
-            delivery_col_idx = df.columns.get_loc(COLUMN_DELIVERY_COMPANY) + 1
-            delivery_col_letter = chr(64 + delivery_col_idx)
-
-            for row in range(2, len(df) + 2):
-                cell = worksheet[f"{delivery_col_letter}{row}"]
-                cell.alignment = Alignment(horizontal="center", vertical="center")
+            # Format all data columns (center alignment)
+            for col_idx, col_name in enumerate(df.columns, 1):
+                col_letter = chr(64 + col_idx)
+                for row in range(2, len(df) + 2):
+                    cell = worksheet[f"{col_letter}{row}"]
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
 
             logger.debug("Applied Excel formatting")
 
