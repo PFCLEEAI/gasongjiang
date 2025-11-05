@@ -3,17 +3,23 @@ Tracking Number Generator
 
 This module generates unique 14-digit tracking numbers for Gyeongdong Express.
 Uses cryptographically secure random number generation for maximum uniqueness.
+
+Format: YYYY + RRR + MM + RRR + DD
+- YYYY: Current year (4 digits)
+- RRR: Random 3-digit number (100-999)
+- MM: Current month (2 digits, 01-12)
+- RRR: Random 3-digit number (100-999)
+- DD: Current day (2 digits, 01-31)
+
+Example: 20253291170804 = 2025 + 329 + 11 + 708 + 04
 """
 
 import secrets
 from datetime import datetime
-from typing import List
+from typing import List, Set, Optional, Callable
 
 from src.utils.constants import (
     TRACKING_NUMBER_LENGTH,
-    SESSION_ID_MIN,
-    SESSION_ID_MAX,
-    SEQUENCE_MAX,
     MAX_RETRY_ATTEMPTS,
 )
 from src.utils.validators import validate_tracking_number
@@ -24,26 +30,30 @@ logger = get_logger(__name__)
 
 class TrackingNumberGenerator:
     """
-    Generates unique tracking numbers with format: YYYY + XXXX + XXXXXX
+    Generates unique tracking numbers with format: YYYY + RRR + MM + RRR + DD
     - YYYY: Current year (4 digits)
-    - XXXX: Session ID (4 digits, random)
-    - XXXXXX: Sequence number (6 digits, random)
+    - RRR: Random1 (3 digits, 100-999)
+    - MM: Current month (2 digits, 01-12)
+    - RRR: Random2 (3 digits, 100-999)
+    - DD: Current day (2 digits, 01-31)
+
+    Total: 14 digits
+    Example: 20253291170804 = 2025 + 329 + 11 + 708 + 04
     """
 
     def __init__(self):
-        """Initialize generator with unique session ID"""
-        self.session_id = self._generate_session_id()
-        logger.info(f"Initialized TrackingNumberGenerator with session_id={self.session_id}")
+        """Initialize generator"""
+        logger.info("Initialized TrackingNumberGenerator with date-based format")
 
     @staticmethod
-    def _generate_session_id() -> int:
+    def _generate_random_3digits() -> int:
         """
-        Generate unique session ID (4 digits: 1000-9999)
+        Generate random 3-digit number (100-999)
 
         Returns:
-            int: Random session ID
+            int: Random 3-digit number
         """
-        return secrets.randbelow(SESSION_ID_MAX - SESSION_ID_MIN) + SESSION_ID_MIN
+        return secrets.randbelow(900) + 100
 
     def generate(self) -> str:
         """
@@ -60,14 +70,18 @@ class TrackingNumberGenerator:
             >>> number.isdigit()
             True
         """
-        # Get current year
-        year = datetime.now().year
+        # Get current date components
+        now = datetime.now()
+        year = now.year
+        month = now.month
+        day = now.day
 
-        # Generate random sequence (6 digits: 000000-999999)
-        sequence = secrets.randbelow(SEQUENCE_MAX + 1)
+        # Generate two random 3-digit numbers
+        random1 = self._generate_random_3digits()
+        random2 = self._generate_random_3digits()
 
-        # Format: YYYY + XXXX + XXXXXX
-        tracking_number = f"{year}{self.session_id:04d}{sequence:06d}"
+        # Format: YYYY + RRR + MM + RRR + DD
+        tracking_number = f"{year}{random1:03d}{month:02d}{random2:03d}{day:02d}"
 
         # Validate before returning
         if not validate_tracking_number(tracking_number):
@@ -76,7 +90,7 @@ class TrackingNumberGenerator:
 
         return tracking_number
 
-    def generate_batch(self, count: int, used_numbers: set = None) -> List[str]:
+    def generate_batch(self, count: int, used_numbers: Optional[Set[str]] = None) -> List[str]:
         """
         Generate a batch of unique tracking numbers
 
@@ -89,6 +103,7 @@ class TrackingNumberGenerator:
 
         Raises:
             RuntimeError: If unable to generate unique numbers after max retries
+            ValueError: If count is negative or zero
 
         Example:
             >>> generator = TrackingNumberGenerator()
@@ -96,10 +111,18 @@ class TrackingNumberGenerator:
             >>> len(numbers) == len(set(numbers))  # All unique
             True
         """
+        if count <= 0:
+            raise ValueError(f"Count must be positive, got {count}")
+
         # Delegate to generate_with_progress without callback (DRY principle)
         return self.generate_with_progress(count, used_numbers, callback=None)
 
-    def generate_with_progress(self, count: int, used_numbers: set = None, callback=None) -> List[str]:
+    def generate_with_progress(
+        self,
+        count: int,
+        used_numbers: Optional[Set[str]] = None,
+        callback: Optional[Callable[[int, int], None]] = None
+    ) -> List[str]:
         """
         Generate batch with progress callback for UI updates
 

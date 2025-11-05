@@ -3,10 +3,18 @@ Excel Upload Handler
 
 This module handles Excel file uploads, validation, and parsing.
 Supports .xls and .xlsx formats with comprehensive error handling.
+
+Supported file formats:
+- .xlsx (Office Open XML format)
+- .xls (Legacy Excel format)
+
+Expected file structure:
+- Must contain '주문고유코드' column (order unique code)
+- Additional columns are optional and preserved
 """
 
 import os
-from typing import Optional
+from typing import Optional, List, Tuple, Dict, Any
 import pandas as pd
 
 from src.utils.constants import (
@@ -71,7 +79,7 @@ class ExcelUploadHandler:
         return FileFormat.TRACKING_ONLY_FORMAT
 
     @staticmethod
-    def extract_special_codes(df: pd.DataFrame) -> list:
+    def extract_special_codes(df: pd.DataFrame) -> List[str]:
         """
         Extract special codes from the DataFrame
 
@@ -119,7 +127,7 @@ class ExcelUploadHandler:
         logger.info(f"File validation passed: {file_path}")
 
     @staticmethod
-    def read_excel(file_path: str, return_format: bool = False) -> tuple:
+    def read_excel(file_path: str, return_format: bool = False) -> Tuple[pd.DataFrame, Optional[str]]:
         """
         Read Excel file and return DataFrame
 
@@ -186,7 +194,7 @@ class ExcelUploadHandler:
             raise ExcelUploadError("파일을 읽을 수 없습니다. 파일이 손상되었거나 형식이 올바르지 않습니다.")
 
     @staticmethod
-    def get_file_info(file_path: str) -> dict:
+    def get_file_info(file_path: str) -> Dict[str, Any]:
         """
         Get information about Excel file without fully reading it
 

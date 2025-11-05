@@ -3,12 +3,24 @@ Uniqueness Checker
 
 This module ensures tracking number uniqueness across all sessions by maintaining
 a persistent history of used numbers.
+
+Features:
+- Persistent history storage in JSON format
+- O(1) uniqueness checking using set data structure
+- Thread-safe file operations with proper error handling
+- Batch operations for efficient bulk checking/registration
+- Singleton pattern for application-wide consistency
+
+File Format:
+- JSON array of tracking number strings
+- UTF-8 encoding for Korean character support
+- Pretty-printed with 2-space indentation for readability
 """
 
 import json
 import os
 from pathlib import Path
-from typing import Set, List
+from typing import Set, List, Tuple, Optional
 
 from src.utils.constants import HISTORY_FILE
 from src.utils.logger import get_logger
@@ -22,12 +34,15 @@ class UniquenessChecker:
     Uses file-based persistence to ensure uniqueness across application sessions.
     """
 
-    def __init__(self, history_file: str = None):
+    def __init__(self, history_file: Optional[str] = None):
         """
         Initialize uniqueness checker
 
         Args:
-            history_file: Path to history file (default: number_history.json)
+            history_file: Path to history file (default: number_history.json from constants)
+
+        Raises:
+            OSError: If unable to access or create history file directory
         """
         self.history_file = history_file or HISTORY_FILE
         self.used_numbers: Set[str] = self._load_history()
@@ -143,7 +158,7 @@ class UniquenessChecker:
         logger.info(f"Registered {registered_count} new numbers from batch of {len(numbers)}")
         return registered_count
 
-    def check_batch(self, numbers: List[str]) -> tuple[List[str], List[str]]:
+    def check_batch(self, numbers: List[str]) -> Tuple[List[str], List[str]]:
         """
         Check a batch of numbers for uniqueness
 

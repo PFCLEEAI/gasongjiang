@@ -3,11 +3,24 @@ Excel Export Handler
 
 This module handles Excel file creation with tracking numbers and formatting.
 Creates professional output files with auto-adjusted columns and proper styling.
+
+Output file format:
+- Column 1: 주문고유코드 (order unique code from input)
+- Column 2: 송장번호 (generated tracking number)
+- Column 3: 택배사 (delivery company - fixed as '경동택배')
+
+Features:
+- Professional header formatting (gray background, bold font)
+- Auto-adjusted column widths
+- Centered alignment for all columns
+- Monospace font for tracking numbers
+- Error handling for file write operations
 """
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 import pandas as pd
+from pandas import ExcelWriter
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 
@@ -46,8 +59,8 @@ class ExcelExportHandler:
         """
         Create output Excel file with exactly 3 columns:
         1. 주문고유코드 (special code from input)
-        2. 택배사 (fixed: 경동택배)
-        3. 가송장 번호 (randomized tracking number)
+        2. 송장번호 (randomized tracking number)
+        3. 택배사 (fixed: 경동택배)
 
         Args:
             special_codes: List of special codes from input file
@@ -80,11 +93,11 @@ class ExcelExportHandler:
                     f"Mismatch: {len(special_codes)} special codes but {len(tracking_numbers)} tracking numbers provided"
                 )
 
-            # Create output DataFrame with exactly 3 columns
+            # Create output DataFrame with exactly 3 columns in specified order
             output_df = pd.DataFrame({
                 '주문고유코드': special_codes,
-                '택배사': [DELIVERY_COMPANY] * len(special_codes),
-                '가송장 번호': tracking_numbers
+                '송장번호': tracking_numbers,
+                '택배사': [DELIVERY_COMPANY] * len(special_codes)
             })
 
             logger.info(f"Exporting 3-column format: {len(output_df)} rows")
@@ -110,7 +123,7 @@ class ExcelExportHandler:
             raise ExcelExportError("파일을 저장할 수 없습니다. 경로를 확인하거나 다른 위치에 저장해보세요.")
 
     @staticmethod
-    def _apply_formatting(writer, df: pd.DataFrame) -> None:
+    def _apply_formatting(writer: ExcelWriter, df: pd.DataFrame) -> None:
         """
         Apply professional formatting to Excel file
 
@@ -149,7 +162,7 @@ class ExcelExportHandler:
                 worksheet.column_dimensions[column_letter].width = adjusted_width
 
             # Format tracking number column (monospace font, centered)
-            tracking_col_idx = df.columns.get_loc('가송장 번호') + 1  # +1 for Excel (1-indexed)
+            tracking_col_idx = df.columns.get_loc('송장번호') + 1  # +1 for Excel (1-indexed)
             tracking_col_letter = chr(64 + tracking_col_idx)  # Convert to letter
 
             tracking_font = Font(name="Courier New", size=11)

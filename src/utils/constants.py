@@ -19,16 +19,9 @@ HISTORY_FILE: Final[str] = "number_history.json"
 # Tracking Number Configuration
 TRACKING_NUMBER_LENGTH: Final[int] = 14
 YEAR_DIGITS: Final[int] = 4
-SESSION_DIGITS: Final[int] = 4
-SEQUENCE_DIGITS: Final[int] = 6
-
-# Session ID Range (4 digits: 1000-9999)
-SESSION_ID_MIN: Final[int] = 1000
-SESSION_ID_MAX: Final[int] = 9999
-
-# Sequence Range (6 digits: 000000-999999)
-SEQUENCE_MIN: Final[int] = 0
-SEQUENCE_MAX: Final[int] = 999999
+MONTH_DIGITS: Final[int] = 2
+DAY_DIGITS: Final[int] = 2
+RANDOM_DIGITS: Final[int] = 3  # Two random 3-digit segments
 
 # Generation Configuration
 MAX_RETRY_ATTEMPTS: Final[int] = 10

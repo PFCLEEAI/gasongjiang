@@ -7,6 +7,8 @@ and other user inputs to ensure data integrity and security.
 
 import os
 from typing import Tuple
+import pandas as pd
+
 from src.utils.constants import (
     SUPPORTED_FORMATS,
     MAX_FILE_SIZE,
@@ -99,7 +101,7 @@ def validate_tracking_number(number: str) -> bool:
     return True
 
 
-def validate_dataframe_not_empty(df) -> Tuple[bool, str]:
+def validate_dataframe_not_empty(df: pd.DataFrame) -> Tuple[bool, str]:
     """
     Validate that DataFrame has data
 

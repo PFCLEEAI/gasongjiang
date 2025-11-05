@@ -60,27 +60,39 @@ Users upload an Excel file with order data → Software generates unique trackin
 - **Validation:** File format check, non-empty data validation
 
 ### 4.2 Tracking Number Generation
-**Format:** `YYYY` + `XXXX` + `XXXXXX` (14 digits total)
+**Format:** `YYYY` + `RRR` + `MM` + `RRR` + `RR` (14 digits total)
 
-**Logic:**
-- **Year Component (YYYY):** Current year (e.g., 2025)
-- **Batch ID (XXXX):** Random 4-digit number unique per session
-- **Sequence (XXXXXX):** Random 6-digit number (000000-999999)
+**Structure:**
+- **Year (YYYY):** Current year (e.g., 2025)
+- **Day of Year (RRR):** Day 1-366, zero-padded to 3 digits (e.g., 329 = Nov 25)
+- **Month (MM):** Current month, zero-padded to 2 digits (e.g., 11)
+- **Random 1 (RRR):** 3-digit random number (100-999)
+- **Random 2 (RR):** 2-digit random number (00-99)
+
+**Example:** `20253291170804`
+- 2025 = Year
+- 329 = Day 329 (November 25)
+- 11 = Month 11
+- 708 = Random component 1
+- 04 = Random component 2
 
 **Constraints:**
+- ✅ Date-based prefix for chronological organization
+- ✅ 810,000 unique combinations per day (900 × 900)
+- ✅ Cryptographically secure random generation
 - ✅ No duplicates within same session
-- ✅ No duplicates across different sessions (store history)
-- ✅ Fully randomized (not sequential)
-- ✅ 100% unique rate
+- ✅ No duplicates across different sessions (history tracking)
+- ✅ 100% uniqueness guarantee
 
 ### 4.3 Assignment & Output
 - Map each order to generated tracking number (1:1)
-- Create output Excel with:
-  - All original columns from input file
-  - New column: `가송장 번호` (tracking number)
-  - New column: `택배사` (always = "경동택배")
-  - Preserve original data integrity
-- Output filename: `가송장_생성기_output_[timestamp].xls`
+- Create output Excel with specific column order:
+  1. **주문고유코드** (from first column of input file)
+  2. **송장번호** (generated tracking number)
+  3. **택배사** (always = "경동택배")
+  4. All remaining original columns from input file
+- Preserve original data integrity
+- Output filename: `가송장_생성기_output_[timestamp].xlsx`
 
 ### 4.4 User Interface
 - **Button 1: "📂 파일 선택" (Select File)**
@@ -241,10 +253,15 @@ Acceptance Criteria:
 
 ### A. Tracking Number Format Examples
 ```
-2025 4661 035527  → Year 2025, Session 4661, Sequence 035527
-2025 4441 017927  → Year 2025, Session 4441, Sequence 017927
-2025 7491 017227  → Year 2025, Session 7491, Sequence 017227
+2025 329 11 708 04  → Year 2025, Day 329, Month 11, Random 708-04
+2025 329 11 815 92  → Year 2025, Day 329, Month 11, Random 815-92
+2025 330 11 234 56  → Year 2025, Day 330, Month 11, Random 234-56
 ```
+
+**Breakdown:**
+- All generated on same day share date prefix (2025 + 329 + 11)
+- Random components (708-04, 815-92, 234-56) ensure uniqueness
+- 810,000 possible combinations per day
 
 ### B. Input/Output Excel Structure
 **INPUT:**
@@ -254,10 +271,12 @@ Acceptance Criteria:
 | ORD002 | 이영희 | AirPods | 부산시 해운대구... |
 
 **OUTPUT:**
-| 주문번호 | 고객명 | 상품명 | 배송주소 | 가송장 번호 | 택배사 |
-|---------|--------|---------|----------|-----------|---------|
-| ORD001 | 김철수 | iPhone 15 | 서울시 강남구... | 20254661035527 | 경동택배 |
-| ORD002 | 이영희 | AirPods | 부산시 해운대구... | 20254441017927 | 경동택배 |
+| 주문고유코드 | 송장번호 | 택배사 | 고객명 | 상품명 | 배송주소 |
+|--------------|----------|--------|--------|---------|----------|
+| ORD001 | 20253291170804 | 경동택배 | 김철수 | iPhone 15 | 서울시 강남구... |
+| ORD002 | 20253291180925 | 경동택배 | 이영희 | AirPods | 부산시 해운대구... |
+
+**Note:** Output always starts with three fixed columns (주문고유코드, 송장번호, 택배사), followed by all other original columns.
 
 ---
 

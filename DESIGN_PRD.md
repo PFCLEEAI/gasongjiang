@@ -818,6 +818,12 @@ Rationale:
 
 ### 11.2 Output Excel Formatting
 
+**Column Order (Fixed):**
+1. **주문고유코드** (Order ID) - From first column of input
+2. **송장번호** (Tracking Number) - Generated 14-digit number
+3. **택배사** (Delivery Company) - Always "경동택배"
+4. All remaining original columns from input file
+
 **Column Headers:**
 - Font: Bold, 12px
 - Background: #F3F4F6 (gray-100)
@@ -829,21 +835,27 @@ Rationale:
 - Background: #FFFFFF (white, alternate #F9FAFB)
 - Text Color: #1F2937 (gray-800)
 
-**Tracking Number Column:**
+**주문고유코드 Column:**
+- Font: Regular, 12px
+- Alignment: Left
+- Content: From first column of input file
+
+**송장번호 Column (Tracking Number):**
 - Font: Monospace (Courier New), 12px
 - Alignment: Center
-- Format: 14-digit number
+- Format: 14-digit number (e.g., "20253291170804")
+- Example: Year 2025, Day 329, Month 11, Random 708-04
 
 **택배사 Column:**
 - Font: Regular, 12px
-- Text: "경동택배" (fixed)
+- Text: "경동택배" (fixed value)
 - Alignment: Center
 
 **Column Widths:**
 - Auto-adjust based on content
 - Minimum: 100px
 - Maximum: 300px
-- Tracking Number: 150px (fixed-width font)
+- 송장번호: 150px (fixed-width font for readability)
 
 ---
 

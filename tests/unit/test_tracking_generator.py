@@ -13,14 +13,13 @@ class TestTrackingNumberGenerator:
     """Test suite for TrackingNumberGenerator class"""
 
     def test_generator_initialization(self):
-        """Test that generator initializes with unique session ID"""
+        """Test that generator initializes successfully"""
         gen1 = TrackingNumberGenerator()
         gen2 = TrackingNumberGenerator()
 
-        assert gen1.session_id >= 1000
-        assert gen1.session_id <= 9999
-        # Session IDs should be different (statistically)
-        # Note: There's a tiny chance they're the same, but very unlikely
+        # Both generators should initialize without error
+        assert gen1 is not None
+        assert gen2 is not None
 
     def test_generate_single_number(self):
         """Test single tracking number generation"""
@@ -36,26 +35,36 @@ class TestTrackingNumberGenerator:
         assert validate_tracking_number(number)
 
     def test_generate_number_format(self):
-        """Test tracking number format components"""
+        """Test tracking number format components: YYYY + RRR + MM + RRR + DD"""
         generator = TrackingNumberGenerator()
         number = generator.generate()
 
-        # Extract components
+        # Extract components: YYYY (4) + RRR (3) + MM (2) + RRR (3) + DD (2) = 14
         year = number[:4]
-        session = number[4:8]
-        sequence = number[8:14]
+        random1 = number[4:7]
+        month = number[7:9]
+        random2 = number[9:12]
+        day = number[12:14]
 
         # Validate year (should be current year)
         assert int(year) >= 2020
         assert int(year) <= 2100
 
-        # Validate session (4 digits: 1000-9999)
-        assert int(session) >= 1000
-        assert int(session) <= 9999
+        # Validate random1 (3 digits: 100-999)
+        assert int(random1) >= 100
+        assert int(random1) <= 999
 
-        # Validate sequence (6 digits: 000000-999999)
-        assert int(sequence) >= 0
-        assert int(sequence) <= 999999
+        # Validate month (2 digits: 01-12)
+        assert int(month) >= 1
+        assert int(month) <= 12
+
+        # Validate random2 (3 digits: 100-999)
+        assert int(random2) >= 100
+        assert int(random2) <= 999
+
+        # Validate day (2 digits: 01-31)
+        assert int(day) >= 1
+        assert int(day) <= 31
 
     def test_generate_batch_uniqueness(self):
         """Test that batch generation produces unique numbers"""
@@ -135,32 +144,38 @@ class TestTrackingNumberGenerator:
         for number in numbers:
             assert validate_tracking_number(number)
 
-    def test_generate_consistency(self):
-        """Test that generated numbers have consistent session ID within same generator"""
+    def test_generate_date_consistency(self):
+        """Test that generated numbers contain current date components"""
+        from datetime import datetime
+
         generator = TrackingNumberGenerator()
         numbers = generator.generate_batch(10)
 
-        # Extract session IDs
-        session_ids = [num[4:8] for num in numbers]
+        # Get current date
+        now = datetime.now()
+        expected_year = str(now.year)
+        expected_month = f"{now.month:02d}"
+        expected_day = f"{now.day:02d}"
 
-        # All should have same session ID (from same generator instance)
-        assert len(set(session_ids)) == 1
+        # All numbers should have same date components (generated at same time)
+        for num in numbers:
+            assert num[:4] == expected_year  # YYYY
+            assert num[7:9] == expected_month  # MM
+            assert num[12:14] == expected_day  # DD
 
-    def test_different_generators_different_sessions(self):
-        """Test that different generator instances have different session IDs (statistically)"""
-        gen1 = TrackingNumberGenerator()
-        gen2 = TrackingNumberGenerator()
+    def test_random_components_vary(self):
+        """Test that random components vary across generated numbers"""
+        generator = TrackingNumberGenerator()
+        numbers = generator.generate_batch(100)
 
-        numbers1 = gen1.generate_batch(5)
-        numbers2 = gen2.generate_batch(5)
+        # Extract random components
+        random1_values = [num[4:7] for num in numbers]
+        random2_values = [num[9:12] for num in numbers]
 
-        session1 = numbers1[0][4:8]
-        session2 = numbers2[0][4:8]
-
-        # Statistically, should be different (not guaranteed, but 9000/10000 chance)
-        # For test robustness, we just check they're valid
-        assert 1000 <= int(session1) <= 9999
-        assert 1000 <= int(session2) <= 9999
+        # Should have multiple different values (statistically very likely)
+        # With 900 possible values each and 100 samples, we expect high diversity
+        assert len(set(random1_values)) > 10
+        assert len(set(random2_values)) > 10
 
 
 @pytest.mark.parametrize("count", [1, 10, 100, 500])

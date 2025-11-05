@@ -2,13 +2,27 @@
 Main Window UI
 
 This module contains the main application window built with PyQt5.
-Follows shadcn/ui + Tailwind CSS design principles.
+Follows shadcn/ui + Tailwind CSS design principles for modern, professional appearance.
+
+Architecture:
+- Main window with centered layout
+- Worker thread for background number generation (prevents UI freezing)
+- Three-step workflow: Upload → Generate → Download
+- Progress tracking with real-time updates
+- Professional error handling with user-friendly messages
+
+UI Components:
+- Title label with company name
+- Status label with dynamic messaging
+- Progress bar for generation tracking
+- Three action buttons with enabled/disabled states
+- File dialogs for input/output file selection
 """
 
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -16,7 +30,7 @@ from PyQt5.QtWidgets import (
     QMessageBox, QApplication
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QCloseEvent
 
 import pandas as pd
 
@@ -42,18 +56,40 @@ logger = get_logger(__name__)
 
 
 class GenerationWorker(QThread):
-    """Worker thread for tracking number generation to prevent UI freezing"""
+    """
+    Worker thread for tracking number generation to prevent UI freezing.
+
+    This thread runs number generation in the background, allowing the UI
+    to remain responsive and update progress in real-time.
+
+    Signals:
+        progress(int, int): Emits (current_count, total_count) for progress updates
+        finished(list): Emits list of generated tracking numbers on completion
+        error(str): Emits error message if generation fails
+    """
 
     progress = pyqtSignal(int, int)  # current, total
     finished = pyqtSignal(list)  # generated numbers
     error = pyqtSignal(str)  # error message
 
-    def __init__(self, count: int, parent=None):
+    def __init__(self, count: int, parent: Optional[QWidget] = None):
+        """
+        Initialize worker thread
+
+        Args:
+            count: Number of tracking numbers to generate
+            parent: Parent widget (optional)
+        """
         super().__init__(parent)
         self.count = count
 
-    def run(self):
-        """Generate tracking numbers in background"""
+    def run(self) -> None:
+        """
+        Generate tracking numbers in background thread.
+
+        This method runs in a separate thread and should not access UI components directly.
+        All UI updates must be done via signal emissions.
+        """
         try:
             generator = TrackingNumberGenerator()
             uniqueness_checker = get_uniqueness_checker()
@@ -71,7 +107,7 @@ class GenerationWorker(QThread):
             self.finished.emit(numbers)
 
         except Exception as e:
-            logger.error(f"Generation error in worker: {e}")
+            logger.error(f"Generation error in worker: {e}", exc_info=True)
             self.error.emit(str(e))
 
 
@@ -81,12 +117,20 @@ class MainWindow(QMainWindow):
     """
 
     def __init__(self):
+        """
+        Initialize main application window.
+
+        Sets up UI components, loads styles, and initializes state variables.
+        """
         super().__init__()
+
+        # Application state
         self.current_df: Optional[pd.DataFrame] = None
-        self.special_codes: Optional[list] = None
-        self.generated_numbers: Optional[list] = None
+        self.special_codes: Optional[List[str]] = None
+        self.generated_numbers: Optional[List[str]] = None
         self.generation_worker: Optional[GenerationWorker] = None
 
+        # Initialize UI
         self.init_ui()
         self.load_stylesheet()
 
@@ -374,8 +418,16 @@ class MainWindow(QMainWindow):
         """Show warning message box"""
         QMessageBox.warning(self, title, message)
 
-    def closeEvent(self, event) -> None:
-        """Handle window close event"""
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """
+        Handle window close event.
+
+        Args:
+            event: Close event from Qt
+
+        Note:
+            Always accepts the close event. Add confirmation dialog here if needed.
+        """
         logger.info("Application closing")
         event.accept()
 

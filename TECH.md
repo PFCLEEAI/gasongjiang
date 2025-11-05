@@ -104,37 +104,56 @@
 ### 4.1 Tracking Number Generation
 
 ```python
-def generate_tracking_number(session_id: int) -> str:
+def generate_tracking_number() -> str:
     """
-    Generate unique 14-digit tracking number
+    Generate unique 14-digit tracking number with date-based structure
 
-    Format: YYYY + XXXX + XXXXXX
-    - YYYY: Current year (e.g., 2025)
-    - XXXX: Session-specific 4-digit random ID
-    - XXXXXX: Order-specific 6-digit random number
+    Format: YYYY + RRR + MM + RRR + RR (14 digits)
+    - YYYY: Current year (4 digits, e.g., 2025)
+    - RRR: Day of year (3 digits, zero-padded, e.g., 329 for Nov 25)
+    - MM: Month (2 digits, zero-padded, e.g., 11 for November)
+    - RRR: Random component 1 (3 digits, 100-999)
+    - RR: Random component 2 (2 digits, 00-99)
 
     Returns:
-        str: 14-digit tracking number (e.g., "20254661035527")
+        str: 14-digit tracking number (e.g., "20253291170804")
+
+    Example:
+        20253291170804
+        2025 = Year 2025
+        329 = Day 329 of year (November 25)
+        11 = Month 11 (November)
+        708 = Random number between 100-999
+        04 = Random number between 00-99
     """
-    year = datetime.now().year
+    from datetime import datetime
+    import secrets
 
-    # Generate session ID (random, 4 digits: 1000-9999)
-    session_part = secrets.randbelow(9000) + 1000
+    now = datetime.now()
 
-    # Generate sequence (random, 6 digits: 000000-999999)
-    sequence_part = secrets.randbelow(1000000)
+    # Date components
+    year = now.year
+    day_of_year = now.timetuple().tm_yday  # 1-366
+    month = now.month
 
-    # Format: YYYY + XXXX + XXXXXX
-    tracking_number = f"{year}{session_part:04d}{sequence_part:06d}"
+    # Random components for uniqueness
+    random1 = secrets.randbelow(900) + 100  # 100-999 (3 digits)
+    random2 = secrets.randbelow(100)        # 00-99 (2 digits)
+
+    # Format: YYYY + RRR + MM + RRR + RR
+    tracking_number = f"{year}{day_of_year:03d}{month:02d}{random1:03d}{random2:02d}"
 
     return tracking_number
 ```
 
 **Logic Explanation:**
-- `Year Component (2025)`: Always current year
-- `Session ID (4 digits)`: Random per application session (ensures different users get different numbers)
-- `Sequence (6 digits)`: Random per order (ensures high uniqueness)
-- **Total Combinations:** 9000 × 1,000,000 = 9 billion possible numbers
+- `Year (YYYY)`: Current year for chronological organization
+- `Day of Year (RRR)`: Day 1-366, zero-padded to 3 digits
+- `Month (MM)`: Month 1-12, zero-padded to 2 digits
+- `Random Component 1 (RRR)`: 3-digit random (100-999) = 900 possibilities
+- `Random Component 2 (RR)`: 2-digit random (00-99) = 100 possibilities
+- **Daily Combinations:** 900 × 100 = 90,000 unique numbers per day
+- **Total Combinations:** 366 days × 90,000 = ~32.9 million per year
 
 ---
 
@@ -199,11 +218,10 @@ def generate_batch(num_orders: int, max_retries: int = 10) -> List[str]:
     """
     generated = []
     uniqueness_checker = UniquenessChecker()
-    session_id = secrets.randbelow(9000) + 1000
 
     for i in range(num_orders):
         for attempt in range(max_retries):
-            number = generate_tracking_number(session_id)
+            number = generate_tracking_number()
 
             # Check uniqueness (both in-session and historical)
             if number not in generated and uniqueness_checker.is_unique(number):
@@ -216,6 +234,8 @@ def generate_batch(num_orders: int, max_retries: int = 10) -> List[str]:
 
     return generated
 ```
+
+**Note:** With 90,000 daily combinations and cryptographic randomness, collision probability is extremely low. The date-based prefix ensures natural distribution across time periods.
 
 ---
 
@@ -275,20 +295,29 @@ class ExcelExportHandler:
 
         Returns:
             bool: Success status
+
+        Output Format:
+            Column 1: 주문고유코드 (from first column of input)
+            Column 2: 송장번호 (generated tracking numbers)
+            Column 3: 택배사 (always "경동택배")
+            Columns 4+: All other original columns
         """
-        # Add tracking numbers column
-        df['가송장 번호'] = tracking_numbers
+        # Get the unique order ID column (first column)
+        order_id_column = df.columns[0]
 
-        # Add delivery company column
-        df['택배사'] = ExcelExportHandler.DELIVERY_COMPANY
+        # Create new DataFrame with specific column order
+        output_df = pd.DataFrame()
+        output_df['주문고유코드'] = df[order_id_column]
+        output_df['송장번호'] = tracking_numbers
+        output_df['택배사'] = ExcelExportHandler.DELIVERY_COMPANY
 
-        # Reorder columns: original columns + new columns
-        columns = list(df.columns[:-2]) + ['가송장 번호', '택배사']
-        df = df[columns]
+        # Add all remaining original columns (excluding the first one we already used)
+        for col in df.columns[1:]:
+            output_df[col] = df[col]
 
         # Write to Excel with formatting
         with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Sheet1')
+            output_df.to_excel(writer, index=False, sheet_name='Sheet1')
 
             # Auto-adjust column widths
             worksheet = writer.sheets['Sheet1']

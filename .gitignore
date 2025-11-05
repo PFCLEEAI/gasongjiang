@@ -57,7 +57,20 @@ number_history.json
 # Temporary files
 *.tmp
 *.temp
-~*
+*.bak
+*.swp
+*~
+.temp/
+temp/
+test_data/
 
 # Excel temp files
 ~$*.xls*
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Performance benchmarks
+performance_results.json
+*_생성기_*.xlsx

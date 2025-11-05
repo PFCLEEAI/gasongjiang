@@ -83,9 +83,10 @@
    - Click **💾 Excel 다운로드** (Download Excel)
    - Choose save location
    - Output file will include:
-     - All original columns
-     - New column: **가송장 번호** (tracking numbers)
-     - New column: **택배사** (always "경동택배")
+     - Column 1: **주문고유코드** (unique order ID from input)
+     - Column 2: **송장번호** (tracking numbers)
+     - Column 3: **택배사** (always "경동택배")
+     - Remaining columns: All other original columns
 
 ### Input File Requirements
 
@@ -101,33 +102,49 @@ Your Excel file should contain order data with columns like:
 ### Output File Format
 
 ```
-| 주문번호 | 고객명 | 상품명 | 배송주소 | 가송장 번호       | 택배사     |
-|----------|--------|---------|----------|-------------------|------------|
-| ORD001   | 김철수 | iPhone  | 서울...  | 20254661035527   | 경동택배   |
-| ORD002   | 이영희 | AirPods | 부산...  | 20254441017927   | 경동택배   |
+| 주문고유코드 | 송장번호         | 택배사   | 고객명 | 상품명    | 배송주소 | ... |
+|--------------|------------------|----------|--------|-----------|----------|-----|
+| ORD001       | 20253291170804   | 경동택배 | 김철수 | iPhone    | 서울...  | ... |
+| ORD002       | 20253291180925   | 경동택배 | 이영희 | AirPods   | 부산...  | ... |
 ```
+
+**Note:** First three columns are always: 주문고유코드, 송장번호, 택배사. All other original columns follow.
 
 ---
 
 ## 🔢 Tracking Number Format
 
-Each tracking number is **14 digits** long:
+Each tracking number is **14 digits** long with a date-based structure:
 
 ```
-2025 4661 035527
-│    │    └─ Sequence (6 digits, random)
-│    └─ Session ID (4 digits, random)
-└─ Year (4 digits, current year)
+2025 329 11 708 04
+│    │   │  │   └─ Random component 2 (100-999)
+│    │   │  └───── Random component 1 (100-999)
+│    │   └──────── Month (01-12, zero-padded)
+│    └──────────── Day of year (001-366, zero-padded to 3 digits)
+└────────────────── Year (4 digits, current year)
 ```
+
+### Example Breakdown
+
+**Tracking Number: 20253291170804**
+- **2025**: Year 2025
+- **329**: Day 329 of the year (November 25)
+- **11**: Month 11 (November)
+- **708**: Random component 1 (between 100-999)
+- **04**: Random component 2 (between 100-999)
 
 ### Uniqueness Guarantee
 
-- **Session ID**: Randomly generated per application session (1000-9999)
-- **Sequence**: Randomly generated per order (000000-999999)
-- **History Tracking**: All generated numbers stored in `number_history.json`
-- **Collision Detection**: Automatic retry if duplicate detected (max 10 attempts)
+- **Date-based prefix**: Year + Day of Year + Month ensures chronological organization
+- **Dual random components**: Two 3-digit random numbers (100-999 each)
+- **810,000 combinations per day**: 900 × 900 possible combinations daily
+- **Cryptographic randomness**: Uses Python's `secrets` module for secure random generation
+- **History tracking**: All generated numbers stored to prevent reuse
+- **Collision detection**: Automatic retry if duplicate detected (statistically near-impossible)
 
-**Total Possible Combinations:** 9,000 × 1,000,000 = **9 billion unique numbers**
+**Daily Capacity:** 810,000 unique tracking numbers per day
+**Annual Capacity:** ~295 million unique tracking numbers per year
 
 ---
 

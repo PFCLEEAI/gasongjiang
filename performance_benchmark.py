@@ -233,11 +233,8 @@ class PerformanceBenchmark:
         results = []
 
         for size in test_sizes:
-            # Create test data
-            test_df = pd.DataFrame({
-                '주문번호': [f'ORDER-{i:06d}' for i in range(size)],
-                '고객명': [f'고객{i}' for i in range(size)]
-            })
+            # Create test data - special codes and tracking numbers
+            special_codes = [f'CODE-{i:06d}' for i in range(size)]
 
             # Generate tracking numbers
             generator = TrackingNumberGenerator()
@@ -248,7 +245,7 @@ class PerformanceBenchmark:
 
             start_time = time.perf_counter()
             ExcelExportHandler.create_output(
-                test_df,
+                special_codes,
                 tracking_numbers,
                 str(temp_file),
                 apply_formatting=True
@@ -350,9 +347,9 @@ class PerformanceBenchmark:
 
         size = 1000
 
-        # Create input file
+        # Create input file with 주문고유코드 column
         input_df = pd.DataFrame({
-            '주문번호': [f'ORDER-{i:06d}' for i in range(size)],
+            '주문고유코드': [f'CODE-{i:06d}' for i in range(size)],
             '고객명': [f'고객{i}' for i in range(size)],
             '주소': [f'서울시 강남구 테헤란로 {i}' for i in range(size)]
         })
@@ -365,6 +362,7 @@ class PerformanceBenchmark:
         # 1. Upload
         t1 = time.perf_counter()
         df = ExcelUploadHandler.read_excel(str(input_file))
+        special_codes = ExcelUploadHandler.extract_special_codes(df)
         upload_time = time.perf_counter() - t1
 
         # 2. Generate
@@ -378,7 +376,7 @@ class PerformanceBenchmark:
         # 3. Export
         t3 = time.perf_counter()
         output_file = self.test_dir / "test_e2e_output.xlsx"
-        ExcelExportHandler.create_output(df, numbers, str(output_file), apply_formatting=True)
+        ExcelExportHandler.create_output(special_codes, numbers, str(output_file), apply_formatting=True)
         export_time = time.perf_counter() - t3
 
         total_time = time.perf_counter() - start_time
