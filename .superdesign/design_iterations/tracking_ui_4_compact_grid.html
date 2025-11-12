@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가송장 생성기 - Compact Grid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        }
+        body {
+            background: #FAFBFC !important;
+        }
+        .container {
+            background: #FFFFFF;
+            max-width: 680px;
+            margin: 20px auto;
+            border-radius: 8px;
+            border: 1px solid #D0D7DE;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+        }
+        .header {
+            background: #F6F8FB;
+            border-bottom: 1px solid #D0D7DE;
+            padding: 24px;
+        }
+        .title {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            color: #0D1117 !important;
+            margin-bottom: 6px !important;
+        }
+        .status {
+            font-size: 13px !important;
+            color: #57606A !important;
+            font-weight: 400;
+        }
+        .status.success {
+            color: #1a7f0f !important;
+        }
+        .content {
+            padding: 20px 24px;
+            border-bottom: 1px solid #D0D7DE;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background: #F6F8FB;
+            border: 1px solid #D0D7DE;
+            border-radius: 6px;
+        }
+        .status-label {
+            font-size: 11px !important;
+            color: #57606A !important;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px !important;
+            letter-spacing: 0.5px;
+        }
+        .status-value {
+            font-size: 16px !important;
+            color: #0D1117 !important;
+            font-weight: 600;
+        }
+        .progress-section {
+            display: none;
+            padding: 16px;
+            background: #F6F8FB;
+            border: 1px solid #D0D7DE;
+            border-radius: 6px;
+        }
+        .progress-section.show {
+            display: block;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #D0D7DE;
+            border-radius: 2px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #1F6FEB;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+        .progress-text {
+            font-size: 12px !important;
+            color: #0969DA !important;
+            font-weight: 600;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 20px 24px;
+        }
+        .btn {
+            padding: 10px 16px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            border: none !important;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: #1F6FEB !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 1px 3px rgba(27, 31, 35, 0.12);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #388BFD !important;
+            box-shadow: 0 3px 12px rgba(27, 31, 35, 0.15);
+        }
+        .btn-secondary {
+            background: #F6F8FB !important;
+            color: #24292F !important;
+            border: 1px solid #D0D7DE !important;
+            box-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #EAEEF2 !important;
+            border-color: #D0D7DE !important;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .icon {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">가송장 생성기</div>
+            <div class="status">📂 파일을 선택하세요</div>
+        </div>
+
+        <div class="content">
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">파일 상태</div>
+                    <div class="status-value">대기 중</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">준비 항목</div>
+                    <div class="status-value">0개</div>
+                </div>
+            </div>
+            <div class="progress-section">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="progress-text">0 / 100 개 생성 중...</div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-primary">
+                <span class="icon">📂</span> 파일 선택
+            </button>
+            <button class="btn btn-secondary" disabled>
+                <span class="icon">🔄</span> 송장 생성
+            </button>
+            <button class="btn btn-secondary" disabled>
+                <span class="icon">💾</span> 다운로드
+            </button>
+        </div>
+    </div>
+</body>
+</html>

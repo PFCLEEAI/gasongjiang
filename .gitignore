@@ -74,3 +74,15 @@ desktop.ini
 # Performance benchmarks
 performance_results.json
 *_생성기_*.xlsx
+
+# .NET build artifacts
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+publish/
+
+# Large binary directories
+dotnet/
+dotnet9/

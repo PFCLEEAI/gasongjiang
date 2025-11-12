@@ -381,3 +381,129 @@ IMPORTANT RULES:
 - **generateTheme**: Generate a theme for the design
 
 When calling tools, you MUST use the actual tool call, do NOT just output text like 'Called tool: write with arguments: ...' or <tool-call>...</tool-call>, this won't actually call the tool. (This is very important to my life, please follow)
+
+---
+
+# GaSongJang (.NET WPF Application)
+
+## Framework Information
+
+**Current Framework**: `.NET 9.0 WPF` (Windows Presentation Foundation)
+**Previous Attempted Framework**: `.NET Framework WinForms` (Deprecated - poor UI capabilities)
+
+**Why WPF was chosen over WinForms:**
+- Superior UI design capabilities with XAML markup language
+- Better support for modern styling, animations, and responsive layouts
+- Excellent Korean text rendering support
+- Strong data binding framework with ObservableCollection
+- Native support for ComboBox dropdowns in DataGrid
+- Professional, modern appearance that matches industry standards
+
+## Application Details
+
+**Name**: 가송장 생성기 (GaSongJang - Tracking Number Generator)
+**Purpose**: Generate unique tracking numbers and organize delivery company assignments from Excel files
+
+**Key Features**:
+1. Import Excel files (XLS & XLSX formats)
+2. Auto-assign delivery companies based on market name rules
+3. Generate unique tracking numbers (YYYYDDDHHMMSSFFF format)
+4. Export results to Excel with 3-column format: OrderID, TrackingNumber, DeliveryCompany
+
+**Delivery Company Logic**:
+- If MarketName contains "11번가" or "스마트스토어" → Assign "직접전달" (Direct Delivery) - NO tracking number
+- Otherwise → Assign "경동택배" (Gyeongdong Courier) - WITH tracking number
+- User can override dropdown selection for each row
+
+**Available Delivery Companies**:
+- 직접전달 (Direct Delivery)
+- 경동택배 (Gyeongdong Courier)
+- 로진택배 (Lozin Delivery)
+- 한진택배 (Hanjin Delivery)
+- NAVER
+
+## Executable Location
+
+**Published Executable Path**:
+```
+C:\Users\Mi.Stay\OneDrive\Coding\Auto_generate_trackingID\gasongjang_v2\GaSongJang\bin\Release\net9.0-windows\win-x64\publish\GaSongJang.exe
+```
+
+**How to Launch**:
+- Double-click the `.exe` file above
+- Application launches with minimal Clean design (1000×900 window)
+- Requires Windows 10 or later with .NET 9.0 runtime (self-contained)
+
+## Project Structure
+
+```
+gasongjang_v2/GaSongJang/
+├── Core/
+│   ├── ExcelProcessor.cs          # Handles Excel I/O (XLS & XLSX)
+│   └── TrackingNumberGenerator.cs # Generates unique tracking numbers
+├── Models/
+│   └── OrderData.cs               # Core data model with delivery logic
+├── MainWindow.xaml                # WPF UI definition
+├── MainWindow.xaml.cs             # UI code-behind and event handlers
+├── App.xaml                       # Application root resources
+├── App.xaml.cs                    # Application entry point
+└── GaSongJang.csproj              # Project configuration
+
+bin/Release/net9.0-windows/win-x64/publish/
+└── GaSongJang.exe                 # Self-contained executable (ready to run)
+```
+
+## Dependencies
+
+**NuGet Packages**:
+- ClosedXML 0.105.0 - Excel file I/O (.xlsx)
+- NPOI 2.7.1 - Excel file support (.xls & .xlsx)
+
+## Recent Updates (Latest Session)
+
+### 1. Added XLS File Support
+**Issue**: Application only supported .xlsx files
+**Solution**: Integrated NPOI library for dual-format support
+- HSSFWorkbook for .xls files (Excel 97-2003)
+- XSSFWorkbook for .xlsx files (Excel 2007+)
+- File type detection based on extension
+- Unified API for both formats
+
+### 2. Added NAVER Delivery Company Option
+**Issue**: Missing "NAVER" option in dropdown
+**Solution**: Added NAVER to delivery company list
+- Updated MainWindow.xaml.cs constructor to populate ComboBoxColumn items
+- Added "NAVER" as 5th option alongside existing 4 companies
+- User can select NAVER for any order in the DataGrid
+
+## Design & Styling
+
+**Design System**: Minimal Clean
+- Color Palette: #F5F7FA (background), #FFFFFF (card), #1F2937 (text), #6B7280 (secondary text)
+- Typography: Segoe UI font family
+- Layout: StackPanel with 1000×900 window
+- Button Height: 44px for upload button, 50px for action buttons
+- DataGrid Height: 400px with 350px fixed width for MarketName column
+
+**UI Components**:
+- Title Label (32px, Bold)
+- Status Label (16px, dynamic color updates)
+- Upload Button (📂 파일 선택)
+- DataGrid (2 columns: MarketName, DeliveryCompany dropdown)
+- Generate Button (🔄 송장 생성)
+- Download Button (💾 Excel 다운로드)
+
+## Build & Deployment
+
+**Build Command**:
+```bash
+cd "C:\Users\Mi.Stay\OneDrive\Coding\Auto_generate_trackingID\gasongjang_v2\GaSongJang"
+dotnet build --configuration Release
+```
+
+**Publish Command**:
+```bash
+dotnet publish --configuration Release --self-contained --runtime win-x64
+```
+
+**Result**: Self-contained executable that runs on Windows 10+ without requiring .NET SDK installed
