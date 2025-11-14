@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using ClosedXML.Excel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -16,9 +17,95 @@ namespace GaSongJang.Core;
 public class ExcelProcessor
 {
     /// <summary>
-    /// Excel 파일에서 주문 데이터 읽기 (XLS, XLSX 모두 지원)
+    /// Excel/CSV 파일에서 주문 데이터 읽기 (XLS, XLSX, CSV 모두 지원)
+    /// 파일 구조: 주문번호, 주문고유코드, 마켓
     /// </summary>
     public List<OrderData> ReadExcelFile(string filePath)
+    {
+        if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return ReadCsvFile(filePath);
+        }
+        else
+        {
+            return ReadExcelNpoiFile(filePath);
+        }
+    }
+
+    /// <summary>
+    /// CSV 파일에서 주문 데이터 읽기
+    /// </summary>
+    private List<OrderData> ReadCsvFile(string filePath)
+    {
+        var orders = new List<OrderData>();
+
+        try
+        {
+            var lines = File.ReadAllLines(filePath, Encoding.UTF8);
+
+            int startIndex = 0;
+
+            // 첫 행이 헤더인지 확인
+            if (lines.Length > 0)
+            {
+                var firstLineParts = lines[0].Split('\t', ',');
+                if (firstLineParts.Length >= 3 && !string.IsNullOrWhiteSpace(firstLineParts[2]))
+                {
+                    string firstMarket = firstLineParts[2].Trim();
+                    if (!char.IsDigit(firstMarket[0]))
+                    {
+                        startIndex = 1; // 헤더 건너뛰기
+                    }
+                }
+            }
+
+            for (int i = startIndex; i < lines.Length; i++)
+            {
+                try
+                {
+                    var parts = lines[i].Split('\t', ',');
+
+                    if (parts.Length < 3)
+                        continue;
+
+                    string orderID = parts[0]?.Trim() ?? "";
+                    string orderCode = parts[1]?.Trim() ?? "";
+                    string market = parts[2]?.Trim() ?? "";
+
+                    if (string.IsNullOrEmpty(market))
+                        continue;
+
+                    var order = new OrderData
+                    {
+                        OrderID = orderID,
+                        OrderCode = orderCode,
+                        Market = market
+                    };
+
+                    order.SetDeliveryCompany();
+                    orders.Add(order);
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"CSV 파일 읽기 실패: {ex.Message}", ex);
+        }
+
+        if (orders.Count == 0)
+            throw new Exception("파일에 유효한 데이터를 찾을 수 없습니다. (최소 3개 열 필요: 주문번호, 주문고유코드, 마켓)");
+
+        return orders;
+    }
+
+    /// <summary>
+    /// Excel (XLS, XLSX) 파일에서 주문 데이터 읽기 (NPOI)
+    /// </summary>
+    private List<OrderData> ReadExcelNpoiFile(string filePath)
     {
         var orders = new List<OrderData>();
 
@@ -26,23 +113,22 @@ public class ExcelProcessor
         {
             IWorkbook workbook;
 
-            // XLS 또는 XLSX 파일인지 판단하여 적절한 workbook 생성
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
                 if (filePath.EndsWith(".xls", StringComparison.OrdinalIgnoreCase))
                 {
-                    workbook = new HSSFWorkbook(fileStream); // XLS (Excel 97-2003)
+                    workbook = new HSSFWorkbook(fileStream);
                 }
                 else if (filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
                 {
-                    workbook = new XSSFWorkbook(fileStream); // XLSX (Excel 2007+)
+                    workbook = new XSSFWorkbook(fileStream);
                 }
                 else
                 {
-                    throw new Exception("지원되지 않는 파일 형식입니다. (XLS 또는 XLSX만 지원)");
+                    throw new Exception("지원되지 않는 파일 형식입니다. (XLS, XLSX, CSV 지원)");
                 }
 
-                var worksheet = workbook.GetSheetAt(0); // 첫 번째 시트 가져오기
+                var worksheet = workbook.GetSheetAt(0);
 
                 if (worksheet == null)
                     throw new Exception("Excel 파일에 시트가 없습니다.");
@@ -54,15 +140,14 @@ public class ExcelProcessor
                 if (rowCount > 0)
                 {
                     var firstRow = worksheet.GetRow(0);
-                    if (firstRow != null && firstRow.PhysicalNumberOfCells >= 2)
+                    if (firstRow != null && firstRow.PhysicalNumberOfCells >= 3)
                     {
-                        var firstCellValue = firstRow.GetCell(0)?.StringCellValue ?? "";
+                        var thirdCell = firstRow.GetCell(2);
+                        string thirdCellValue = GetCellValueAsString(thirdCell);
 
-                        if (firstCellValue.Contains("주문") || firstCellValue.Contains("코드") ||
-                            firstCellValue.Contains("번호") || firstCellValue.Contains("마켓") ||
-                            firstCellValue.Contains("이름") || !char.IsDigit(firstCellValue.FirstOrDefault()))
+                        if (!string.IsNullOrEmpty(thirdCellValue) && !char.IsDigit(thirdCellValue[0]))
                         {
-                            startRowIndex = 1; // 헤더 건너뛰기
+                            startRowIndex = 1;
                         }
                     }
                 }
@@ -76,21 +161,24 @@ public class ExcelProcessor
                         if (row == null) continue;
 
                         var orderIDCell = row.GetCell(0);
-                        var marketNameCell = row.GetCell(1);
+                        var orderCodeCell = row.GetCell(1);
+                        var marketCell = row.GetCell(2);
 
-                        if (orderIDCell == null || marketNameCell == null)
+                        if (marketCell == null)
                             continue;
 
-                        string orderID = orderIDCell.StringCellValue?.Trim() ?? "";
-                        string marketName = marketNameCell.StringCellValue?.Trim() ?? "";
+                        string orderID = GetCellValueAsString(orderIDCell)?.Trim() ?? "";
+                        string orderCode = GetCellValueAsString(orderCodeCell)?.Trim() ?? "";
+                        string market = GetCellValueAsString(marketCell)?.Trim() ?? "";
 
-                        if (string.IsNullOrEmpty(orderID) || string.IsNullOrEmpty(marketName))
+                        if (string.IsNullOrEmpty(market))
                             continue;
 
                         var order = new OrderData
                         {
                             OrderID = orderID,
-                            MarketName = marketName
+                            OrderCode = orderCode,
+                            Market = market
                         };
 
                         order.SetDeliveryCompany();
@@ -111,7 +199,7 @@ public class ExcelProcessor
         }
 
         if (orders.Count == 0)
-            throw new Exception("Excel 파일에 유효한 데이터를 찾을 수 없습니다. (최소 2개 열 필요: 주문코드, 마켓이름)");
+            throw new Exception("파일에 유효한 데이터를 찾을 수 없습니다. (최소 3개 열 필요: 주문번호, 주문고유코드, 마켓)");
 
         return orders;
     }
@@ -143,7 +231,7 @@ public class ExcelProcessor
                 int rowNum = i + 2;
                 var order = orders[i];
 
-                worksheet.Cell(rowNum, 1).Value = order.OrderID;
+                worksheet.Cell(rowNum, 1).Value = order.OrderCode;
                 worksheet.Cell(rowNum, 2).Value = order.TrackingNumber;
                 worksheet.Cell(rowNum, 3).Value = order.DeliveryCompany;
             }
@@ -157,6 +245,33 @@ public class ExcelProcessor
         catch (Exception ex)
         {
             throw new Exception($"Excel 파일 저장 실패: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// NPOI 셀값을 문자열로 안전하게 변환
+    /// 숫자, 텍스트, 날짜 등 모든 형식 지원
+    /// </summary>
+    private string GetCellValueAsString(ICell cell)
+    {
+        if (cell == null)
+            return "";
+
+        try
+        {
+            return cell.CellType switch
+            {
+                CellType.String => cell.StringCellValue ?? "",
+                CellType.Numeric => cell.NumericCellValue.ToString("F0").TrimEnd('0').TrimEnd('.'),
+                CellType.Boolean => cell.BooleanCellValue.ToString(),
+                CellType.Formula => cell.StringCellValue ?? cell.NumericCellValue.ToString(),
+                CellType.Blank => "",
+                _ => cell.ToString() ?? ""
+            };
+        }
+        catch
+        {
+            return cell.ToString() ?? "";
         }
     }
 }

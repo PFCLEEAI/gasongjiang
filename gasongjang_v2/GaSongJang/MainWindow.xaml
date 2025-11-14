@@ -5,101 +5,206 @@
         Width="1000"
         Height="900"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F7FA"
+        Background="#F8FAFC"
         FontFamily="Segoe UI"
         ResizeMode="CanMinimize">
 
-    <Grid Background="#FFFFFF" Margin="30">
-        <StackPanel VerticalAlignment="Top">
-
-            <!-- TITLE -->
-            <Label Content="가송장 생성기"
-                   FontSize="32"
-                   FontWeight="Bold"
-                   Foreground="#1F2937"
-                   Margin="10,20,10,0"/>
-
-            <!-- STATUS -->
-            <Label x:Name="StatusLabel"
-                   Content="📂 파일을 선택하세요"
-                   FontSize="16"
-                   Foreground="#6B7280"
-                   Margin="10,5,10,0"/>
-
-            <!-- DIVIDER -->
-            <Border Height="1" Background="#E5E7EB" Margin="10,15,10,0"/>
-
-            <!-- UPLOAD BUTTON -->
-            <Button x:Name="BtnUpload"
-                    Content="📂 파일 선택"
-                    FontSize="14"
-                    FontWeight="Bold"
-                    Foreground="#1F2937"
-                    Background="#F3F4F6"
-                    Click="BtnUpload_Click"
-                    Height="44"
-                    Margin="10,20,10,0"
-                    Cursor="Hand"/>
-
-            <!-- DATAGRID -->
-            <DataGrid x:Name="DgvMarkets"
-                      Margin="10,20,10,0"
-                      Height="400"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      CanUserResizeRows="False"
-                      Background="#FFFFFF"
-                      Foreground="#1F2937"
-                      BorderBrush="#E5E7EB"
-                      BorderThickness="1">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="마켓이름"
-                                       Binding="{Binding MarketName}"
-                                       Width="350"
-                                       IsReadOnly="True"/>
-                    <DataGridComboBoxColumn x:Name="DeliveryCompanyColumn"
-                                           Header="택배사"
-                                           SelectedValueBinding="{Binding DeliveryCompany}"
-                                           Width="*"/>
-                </DataGrid.Columns>
-            </DataGrid>
-
-            <!-- DIVIDER 2 -->
-            <Border Height="1" Background="#E5E7EB" Margin="10,20,10,0"/>
-
-            <!-- BUTTONS -->
-            <Grid Margin="10,20,10,20" Height="50">
+    <DockPanel>
+        <!-- HEADER BAR -->
+        <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="24,16">
+            <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Button x:Name="BtnGenerate"
-                        Content="🔄 송장 생성"
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Foreground="#1F2937"
-                        Background="#F3F4F6"
-                        Click="BtnGenerate_Click"
-                        IsEnabled="False"
-                        Grid.Column="0"
-                        Cursor="Hand"/>
+                <!-- TITLE -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="가송장 생성기"
+                               FontSize="28"
+                               FontWeight="SemiBold"
+                               Foreground="#0F172A"
+                               Margin="0,0,0,4"/>
+                    <TextBlock x:Name="StatusLabel"
+                               Text="📂 파일을 선택하세요"
+                               FontSize="14"
+                               Foreground="#64748B"
+                               Margin="0,0,0,0"/>
+                </StackPanel>
 
-                <Button x:Name="BtnDownload"
-                        Content="💾 Excel 다운로드"
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Foreground="#1F2937"
-                        Background="#F3F4F6"
-                        Click="BtnDownload_Click"
-                        IsEnabled="False"
-                        Grid.Column="2"
-                        Cursor="Hand"/>
+                <!-- SETTINGS BUTTON -->
+                <Button Grid.Column="1"
+                        Content="⚙️ 설정"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="#0F172A"
+                        Background="#E2E8F0"
+                        Click="MenuSettings_Click"
+                        Cursor="Hand"
+                        Padding="16,10"
+                        Style="{DynamicResource ButtonStyle}"/>
             </Grid>
+        </Border>
 
-        </StackPanel>
-    </Grid>
+        <!-- MAIN CONTENT -->
+        <Grid Background="#F8FAFC" Margin="24">
+            <StackPanel VerticalAlignment="Top">
+
+                <!-- UPLOAD CARD -->
+                <Border Background="#FFFFFF"
+                        BorderBrush="#E2E8F0"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="파일 업로드"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#0F172A"
+                                   Margin="0,0,0,12"/>
+                        <TextBlock Text="Excel 또는 CSV 파일을 선택하세요"
+                                   FontSize="13"
+                                   Foreground="#64748B"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12"/>
+                        <Button x:Name="BtnUpload"
+                                Content="📂 파일 선택"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Foreground="#FFFFFF"
+                                Background="#0F172A"
+                                Click="BtnUpload_Click"
+                                Height="44"
+                                Margin="0,8,0,0"
+                                Cursor="Hand"
+                                Padding="16,12"
+                                Style="{DynamicResource ButtonStyle}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- DATA GRID CARD -->
+                <Border Background="#FFFFFF"
+                        BorderBrush="#E2E8F0"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="주문 목록"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#0F172A"
+                                   Margin="0,0,0,12"/>
+                        <DataGrid x:Name="DgvMarkets"
+                                  Height="280"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserResizeRows="False"
+                                  Background="#FFFFFF"
+                                  Foreground="#0F172A"
+                                  BorderBrush="#E2E8F0"
+                                  BorderThickness="1"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F1F5F9"
+                                  VerticalGridLinesBrush="Transparent">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="마켓"
+                                                   Binding="{Binding Market}"
+                                                   Width="120"
+                                                   IsReadOnly="True"/>
+                                <DataGridTextColumn Header="송장번호"
+                                                   Binding="{Binding TrackingNumber}"
+                                                   Width="150"
+                                                   IsReadOnly="True"/>
+                                <DataGridComboBoxColumn x:Name="DeliveryCompanyColumn"
+                                                       Header="택배사"
+                                                       SelectedValueBinding="{Binding DeliveryCompany}"
+                                                       Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ACTION BUTTONS CARD -->
+                <Border Background="#FFFFFF"
+                        BorderBrush="#E2E8F0"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button x:Name="BtnGenerate"
+                                Content="🔄 송장 생성"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Foreground="#FFFFFF"
+                                Background="#0F172A"
+                                Click="BtnGenerate_Click"
+                                IsEnabled="False"
+                                Grid.Column="0"
+                                Cursor="Hand"
+                                Height="44"
+                                Padding="16,12"
+                                Style="{DynamicResource ButtonStyle}"/>
+
+                        <Button x:Name="BtnDownload"
+                                Content="💾 Excel 다운로드"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Foreground="#FFFFFF"
+                                Background="#0F172A"
+                                Click="BtnDownload_Click"
+                                IsEnabled="False"
+                                Grid.Column="2"
+                                Cursor="Hand"
+                                Height="44"
+                                Padding="16,12"
+                                Style="{DynamicResource ButtonStyle}"/>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+
+    <!-- BUTTON STYLE -->
+    <Window.Resources>
+        <Style x:Key="ButtonStyle" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="true">
+                                <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
 </Window>

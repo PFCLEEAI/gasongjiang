@@ -6,14 +6,20 @@ namespace GaSongJang.Models;
 public class OrderData
 {
     /// <summary>
-    /// 주문 고유 코드
+    /// 주문 번호
     /// </summary>
     public string OrderID { get; set; } = string.Empty;
 
     /// <summary>
-    /// 마켓 이름 (판매처)
+    /// 주문 고유 코드
     /// </summary>
-    public string MarketName { get; set; } = string.Empty;
+    public string OrderCode { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 마켓 (판매처 플랫폼)
+    /// 예: "06.쿠팡", "03.11번가", "04.스마트스토어" 등
+    /// </summary>
+    public string Market { get; set; } = string.Empty;
 
     /// <summary>
     /// 생성된 송장번호
@@ -26,27 +32,28 @@ public class OrderData
     public string DeliveryCompany { get; set; } = string.Empty;
 
     /// <summary>
-    /// 조건에 따라 배송 회사 설정 및 송장번호 처리
-    /// - MarketName에 "11번가" 또는 "스마트스토어"가 포함되면 "직접전달" (송장번호 제거)
-    /// - 그 외에는 "경동택배" (송장번호 필요)
+    /// Market 설정에 따라 배송 회사 자동 할당
+    /// AppSettings에서 마켓별 배송사를 읽어 적용
+    /// 기본값: "경동택배"
     /// </summary>
     public void SetDeliveryCompany()
     {
-        if (string.IsNullOrWhiteSpace(MarketName))
+        var settings = AppSettings.Load();
+
+        if (string.IsNullOrWhiteSpace(Market))
         {
             DeliveryCompany = "경동택배";
             return;
         }
 
-        if (MarketName.Contains("11번가") || MarketName.Contains("스마트스토어"))
+        // Market에서 설정된 배송사 가져오기
+        // Market이 설정에 없으면 기본값 "경동택배" 사용
+        DeliveryCompany = settings.GetDeliveryCompany(Market) ?? "경동택배";
+
+        // 직접전달이면 송장번호는 불필요
+        if (DeliveryCompany == "직접전달")
         {
-            DeliveryCompany = "직접전달";
-            TrackingNumber = string.Empty;  // 직접전달은 송장번호 불필요
-        }
-        else
-        {
-            DeliveryCompany = "경동택배";
-            // TrackingNumber는 나중에 생성 로직에서 설정
+            TrackingNumber = string.Empty;
         }
     }
 }

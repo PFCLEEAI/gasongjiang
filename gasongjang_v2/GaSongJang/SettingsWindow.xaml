@@ -1,0 +1,11 @@
+<Window x:Class="GaSongJang.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="배송사 설정"
+        Width="600"
+        Height="750"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI"
+        ResizeMode="CanResize"
+        WindowStyle="SingleBorderWindow"/>
